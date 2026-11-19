@@ -1,0 +1,466 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INDIAN AI - Personal Assistant</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#090910;color:white;font-family:Arial,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer;border:0}
+.hidden{display:none!important}
+
+/* AUTH */
+#authPage{min-height:100vh;display:grid;place-items:center;padding:20px}
+.authBox{width:100%;max-width:430px;background:#151522;border:1px solid #713cff;border-radius:18px;padding:30px;box-shadow:0 0 35px #702cff35}
+.logo{text-align:center;font-size:31px;font-weight:bold;color:#b58aff;letter-spacing:3px}
+.sub{text-align:center;color:#aaa;margin-bottom:25px}
+.authBox input:not([type=checkbox]){width:100%;padding:14px;margin:8px 0;background:#090910;border:1px solid #393044;border-radius:9px;color:white;outline:none}
+.authBox input:focus{border-color:#9b63ff}
+.primary{background:linear-gradient(90deg,#702cff,#a64cff);color:white;padding:13px;border-radius:9px;font-weight:bold}
+.authBox .primary{width:100%;margin-top:12px}
+.link{text-align:center;color:#b58aff;cursor:pointer;margin-top:18px}
+#authMessage{text-align:center;color:#ff8888}
+.passwordBox{position:relative}
+.passwordBox input{padding-right:85px!important}
+.eyeButton{position:absolute;right:8px;top:17px;background:#302044;color:#fff;padding:6px 10px;border-radius:6px;font-size:12px}
+.showOption{color:#aaa;font-size:13px}
+
+/* APP */
+#app{height:100vh;display:flex;overflow:hidden}
+.sidebar{width:270px;min-width:270px;background:#11111b;border-right:1px solid #292536;padding:18px;display:flex;flex-direction:column}
+.brand{font-size:23px;color:#b58aff;font-weight:bold;letter-spacing:2px;margin:5px 0 25px}
+.sideButton{width:100%;padding:13px;text-align:left;background:#20202d;color:white;border-radius:9px;margin-bottom:10px}
+.sideButton:hover{background:#34234e}
+.historyTitle{color:#888;font-size:12px;margin:25px 5px 10px}
+#historyList{overflow:auto;flex:1}
+.historyItem{padding:11px;border-radius:8px;color:#ccc;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.historyItem:hover{background:#242434}
+.userArea{border-top:1px solid #333;padding-top:15px;color:#aaa;font-size:13px}
+.logout{background:#39212d;color:#ffaaaa;padding:10px;border-radius:8px;margin-top:10px;width:100%}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;background:#090910}
+.topbar{height:65px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 25px;border-bottom:1px solid #292536}
+.topbar h2{font-size:18px;font-weight:500}
+.status{color:#8de3a6;font-size:13px}
+#messages{flex:1;overflow-y:auto;padding:30px max(20px,8%);scroll-behavior:smooth}
+.welcome{text-align:center;margin:12vh auto 40px;max-width:650px}
+.welcome h1{font-size:clamp(30px,5vw,48px);color:#b58aff}
+.welcome p{color:#aaa;line-height:1.6}
+.suggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:30px}
+.suggestion{background:#171723;border:1px solid #353044;padding:17px;border-radius:12px;color:#ddd;text-align:left}
+.suggestion:hover{border-color:#9b63ff}
+.message{max-width:850px;margin:15px auto;padding:15px 18px;border-radius:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.user{background:#38215f}
+.ai{background:#191923;border:1px solid #302b3d}
+.message img{max-width:100%;max-height:300px;border-radius:10px;display:block;margin-top:10px}
+.composerArea{padding:15px 20px 22px;border-top:1px solid #292536;background:#101019}
+.tools{max-width:900px;margin:0 auto 12px;display:flex;gap:9px;flex-wrap:wrap}
+.toolButton{background:#222231;color:#ddd;padding:9px 13px;border-radius:8px;font-size:13px}
+.toolButton:hover{background:#39304d}
+.composer{max-width:900px;margin:auto;display:flex;gap:10px;background:#191923;border:1px solid #4a3c62;border-radius:15px;padding:10px}
+.composer input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:white;padding:8px}
+.send{background:#8745e9;color:white;border-radius:10px;padding:0 20px}
+#preview{max-width:900px;margin:0 auto 10px}
+#preview img{max-width:120px;max-height:100px;border-radius:8px}
+.note{text-align:center;color:#777;font-size:11px;margin-top:10px}
+
+@media(max-width:700px){
+ #app{height:100dvh}
+ .sidebar{width:65px;min-width:65px;padding:10px 6px}
+ .brand{font-size:0;text-align:center;margin:10px 0 20px}
+ .brand:after{content:"AI";font-size:20px}
+ .sideButton{font-size:0;text-align:center;padding:13px 3px}
+ .sideButton span{font-size:18px}
+ .historyTitle,#historyList,.userArea{display:none}
+ .topbar{padding:0 12px}
+ #messages{padding:15px 10px}
+ .suggestions{grid-template-columns:1fr}
+ .composerArea{padding:10px}
+ .tools{gap:5px}
+ .toolButton{padding:8px;font-size:11px}
+ .composer{gap:5px}
+ .send{padding:0 13px}
+}
+</style>
+</head>
+
+<body>
+
+<section id="authPage">
+ <div class="authBox">
+  <div class="logo">INDIAN AI</div>
+  <p class="sub">Your Personal AI Assistant</p>
+
+  <!-- REGISTER -->
+  <div id="registerForm">
+   <h3>Create Account</h3>
+   <input id="regName" placeholder="Your Name">
+   <input id="regEmail" type="email" placeholder="Email Address">
+
+   <div class="passwordBox">
+    <input id="regPass" type="password" placeholder="Create Password">
+    <button type="button" class="eyeButton" id="regEye" onclick="togglePassword('regPass','regEye')">SHOW</button>
+   </div>
+
+   <button class="primary" onclick="register()">CREATE ACCOUNT</button>
+   <p class="link" onclick="showLogin()">Already have an account? Login</p>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="loginForm" class="hidden">
+   <h3>Welcome Back</h3>
+   <input id="loginEmail" type="email" placeholder="Email Address">
+
+   <div class="passwordBox">
+    <input id="loginPass" type="password" placeholder="Password">
+    <button type="button" class="eyeButton" id="loginEye" onclick="togglePassword('loginPass','loginEye')">SHOW</button>
+   </div>
+
+   <button class="primary" onclick="login()">LOGIN</button>
+   <p class="link" onclick="showRegister()">Create New Account</p>
+  </div>
+
+  <p id="authMessage"></p>
+ </div>
+</section>
+
+<section id="app" class="hidden">
+ <aside class="sidebar">
+  <div class="brand">INDIAN AI</div>
+
+  <button class="sideButton" onclick="newChat()"><span>＋</span> New Chat</button>
+  <button class="sideButton" onclick="document.getElementById('imageInput').click()"><span>▧</span> Image Upload</button>
+  <button class="sideButton" onclick="generateImage()"><span>🎨</span> AI Image Generation</button>
+  <button class="sideButton" onclick="startVoice()"><span>🎙️</span> Voice Input</button>
+
+  <div class="historyTitle">CHAT HISTORY</div>
+  <div id="historyList"></div>
+
+  <div class="userArea">
+   <div id="userName">User</div>
+   <button class="logout" onclick="logout()">LOGOUT</button>
+  </div>
+ </aside>
+
+ <main class="main">
+  <header class="topbar">
+   <h2>INDIAN AI Assistant</h2>
+   <span class="status">● Ready</span>
+  </header>
+
+  <div id="messages">
+   <div class="welcome" id="welcome">
+    <h1>Hello! Welcome to INDIAN AI</h1>
+    <p>Your AI assistant. Ask questions, upload images, or use your voice.</p>
+    <div class="suggestions">
+     <button class="suggestion" onclick="suggest('Explain science in simple words')">🧠 Explain something</button>
+     <button class="suggestion" onclick="suggest('Write a story for me')">✍️ Write a story</button>
+     <button class="suggestion" onclick="suggest('Help me learn programming')">💻 Learn coding</button>
+     <button class="suggestion" onclick="generateImage()">🎨 Generate an image</button>
+    </div>
+   </div>
+  </div>
+
+  <div class="composerArea">
+   <div id="preview"></div>
+   <div class="tools">
+    <button class="toolButton" onclick="document.getElementById('imageInput').click()">＋ Image Upload</button>
+    <button class="toolButton" onclick="generateImage()">🎨 Generate Image</button>
+    <button class="toolButton" onclick="startVoice()">🎙️ Voice Input</button>
+    <button class="toolButton" onclick="toggleVoice()">🔊 Voice Output: <span id="voiceStatus">ON</span></button>
+   </div>
+
+   <input id="imageInput" type="file" accept="image/*" hidden onchange="uploadImage(event)">
+
+   <div class="composer">
+    <input id="question" placeholder="Message INDIAN AI..." onkeydown="if(event.key==='Enter')sendMessage()">
+    <button class="send" onclick="sendMessage()">➤</button>
+   </div>
+   <div class="note">INDIAN AI can make mistakes. Check important information.</div>
+  </div>
+ </main>
+</section>
+
+<script>
+let currentUser=null;
+let chats=[];
+let activeChat=null;
+let selectedImage=null;
+let voiceEnabled=true;
+
+const $=id=>document.getElementById(id);
+
+function showLogin(){
+ $('registerForm').classList.add('hidden');
+ $('loginForm').classList.remove('hidden');
+ $('authMessage').textContent='';
+}
+function showRegister(){
+ $('loginForm').classList.add('hidden');
+ $('registerForm').classList.remove('hidden');
+ $('authMessage').textContent='';
+}
+function togglePassword(inputId,buttonId){
+ const pass=$(inputId);
+ const button=$(buttonId);
+ if(pass.type==='password'){
+  pass.type='text';
+  button.textContent='HIDE';
+ }else{
+  pass.type='password';
+  button.textContent='SHOW';
+ }
+}
+
+/* DEMO ONLY: NOT SECURE FOR REAL ACCOUNTS.
+   Use Firebase Authentication or a secure backend for production. */
+function register(){
+ const name=$('regName').value.trim();
+ const email=$('regEmail').value.trim().toLowerCase();
+ const password=$('regPass').value;
+ const msg=$('authMessage');
+
+ if(!name||!email||!password){
+  msg.textContent='Please fill all fields.';
+  return;
+ }
+ if(password.length<8){
+  msg.textContent='Password must be at least 8 characters.';
+  return;
+ }
+ let users=JSON.parse(localStorage.getItem('indianDemoUsers')||'[]');
+ if(users.some(u=>u.email===email)){
+  msg.textContent='Account already exists. Please login.';
+  return;
+ }
+ users.push({name,email,password});
+ localStorage.setItem('indianDemoUsers',JSON.stringify(users));
+ msg.style.color='#8de3a6';
+ msg.textContent='Account created successfully. Please login.';
+ showLogin();
+}
+function login(){
+ const email=$('loginEmail').value.trim().toLowerCase();
+ const password=$('loginPass').value;
+ const users=JSON.parse(localStorage.getItem('indianDemoUsers')||'[]');
+ const user=users.find(u=>u.email===email&&u.password===password);
+
+ if(!user){
+  $('authMessage').textContent='Incorrect email or password.';
+  return;
+ }
+ currentUser=user;
+ sessionStorage.setItem('indianDemoSession',email);
+ openApp();
+}
+function openApp(){
+ $('authPage').classList.add('hidden');
+ $('app').classList.remove('hidden');
+ $('userName').textContent=currentUser.name;
+ loadChats();
+}
+function logout(){
+ sessionStorage.removeItem('indianDemoSession');
+ currentUser=null;
+ chats=[];
+ activeChat=null;
+ $('app').classList.add('hidden');
+ $('authPage').classList.remove('hidden');
+ showLogin();
+}
+function loadChats(){
+ chats=JSON.parse(localStorage.getItem('chats_'+currentUser.email)||'[]');
+ renderHistory();
+ newChat();
+}
+function saveChats(){
+ localStorage.setItem('chats_'+currentUser.email,JSON.stringify(chats));
+ renderHistory();
+}
+function renderHistory(){
+ $('historyList').innerHTML='';
+ chats.forEach(chat=>{
+  const item=document.createElement('div');
+  item.className='historyItem';
+  item.textContent='💬 '+(chat.title||'New Chat');
+  item.onclick=()=>openChat(chat.id);
+  $('historyList').appendChild(item);
+ });
+}
+function newChat(){
+ activeChat={id:Date.now(),title:'New Chat',messages:[]};
+ $('messages').innerHTML=`
+ <div class="welcome" id="welcome">
+  <h1>Hello! Welcome to INDIAN AI</h1>
+  <p>Your AI assistant. Ask questions, upload images, or use your voice.</p>
+  <div class="suggestions">
+   <button class="suggestion" onclick="suggest('Explain science in simple words')">🧠 Explain something</button>
+   <button class="suggestion" onclick="suggest('Write a story for me')">✍️ Write a story</button>
+   <button class="suggestion" onclick="suggest('Help me learn programming')">💻 Learn coding</button>
+   <button class="suggestion" onclick="generateImage()">🎨 Generate an image</button>
+  </div>
+ </div>`;
+ selectedImage=null;
+ $('preview').innerHTML='';
+ $('question').value='';
+}
+function openChat(id){
+ const chat=chats.find(c=>c.id===id);
+ if(!chat)return;
+ activeChat=chat;
+ $('messages').innerHTML='';
+ chat.messages.forEach(m=>addMessage(m.role,m.text,m.image));
+}
+function addMessage(role,text,image){
+ $('welcome')?.remove();
+ const div=document.createElement('div');
+ div.className='message '+(role==='user'?'user':'ai');
+ div.textContent=text;
+ if(image){
+  const img=document.createElement('img');
+  img.src=image;
+  div.appendChild(img);
+ }
+ $('messages').appendChild(div);
+ $('messages').scrollTop=$('messages').scrollHeight;
+}
+function saveCurrentChat(){
+ if(!activeChat||!activeChat.messages.length)return;
+ if(!chats.some(c=>c.id===activeChat.id))chats.unshift(activeChat);
+ saveChats();
+}
+function suggest(text){
+ $('question').value=text;
+ sendMessage();
+}
+function uploadImage(event){
+ const file=event.target.files[0];
+ if(!file)return;
+ if(!file.type.startsWith('image/')){
+  alert('Choose an image file.');
+  return;
+ }
+ if(file.size>5*1024*1024){
+  alert('Image must be under 5 MB.');
+  return;
+ }
+ selectedImage=file;
+ $('preview').innerHTML='';
+ const img=document.createElement('img');
+ img.src=URL.createObjectURL(file);
+ $('preview').appendChild(img);
+}
+async function sendMessage(){
+ const text=$('question').value.trim();
+ if(!text&&!selectedImage)return;
+
+ const imageFile=selectedImage;
+ const imageURL=imageFile?URL.createObjectURL(imageFile):null;
+ $('question').value='';
+ $('preview').innerHTML='';
+ selectedImage=null;
+ $('imageInput').value='';
+
+ const title=text||'Image question';
+ if(activeChat.messages.length===0)activeChat.title=title.slice(0,35);
+
+ activeChat.messages.push({role:'user',text:text||'Please describe this image.',image:imageURL});
+ addMessage('user',text||'Please describe this image.',imageURL);
+ saveCurrentChat();
+
+ const loading=document.createElement('div');
+ loading.className='message ai';
+ loading.textContent='INDIAN AI is thinking...';
+ $('messages').appendChild(loading);
+
+ try{
+  const form=new FormData();
+  form.append('message',text);
+  form.append('history',JSON.stringify(activeChat.messages.map(m=>({role:m.role,content:m.text}))));
+  if(imageFile)form.append('image',imageFile);
+
+  const response=await fetch('/api/chat',{method:'POST',body:form});
+  if(!response.ok)throw new Error('Backend unavailable');
+  const data=await response.json();
+  loading.remove();
+  const answer=data.reply||'No answer received.';
+  activeChat.messages.push({role:'assistant',text:answer});
+  addMessage('assistant',answer);
+  saveCurrentChat();
+  if(voiceEnabled)speak(answer);
+ }catch(error){
+  loading.textContent='Real AI is not connected yet. A secure AI backend is required.';
+  activeChat.messages.push({role:'assistant',text:loading.textContent});
+  saveCurrentChat();
+ }
+}
+async function generateImage(){
+ const prompt=window.prompt('Describe the image you want to create:');
+ if(!prompt)return;
+ addMessage('user','Generate image: '+prompt);
+ const loading=document.createElement('div');
+ loading.className='message ai';
+ loading.textContent='Connecting to image generator...';
+ $('messages').appendChild(loading);
+
+ try{
+  const response=await fetch('/api/image',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({prompt})
+  });
+  if(!response.ok)throw new Error();
+  const data=await response.json();
+  loading.remove();
+  if(!data.imageUrl)throw new Error();
+  const div=document.createElement('div');
+  div.className='message ai';
+  div.textContent='Generated image:';
+  const img=document.createElement('img');
+  img.src=data.imageUrl;
+  div.appendChild(img);
+  $('messages').appendChild(div);
+ }catch(error){
+  loading.textContent='AI Image Generation requires a connected backend.';
+ }
+}
+function startVoice(){
+ const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!Speech){
+  alert('Voice input is not supported here. Try Chrome.');
+  return;
+ }
+ const recognition=new Speech();
+ recognition.lang='en-IN';
+ recognition.onresult=e=>{
+  $('question').value=e.results[0][0].transcript;
+ };
+ recognition.onerror=()=>alert('Could not hear clearly. Try again.');
+ recognition.start();
+}
+function speak(text){
+ if(!('speechSynthesis' in window))return;
+ speechSynthesis.cancel();
+ const utterance=new SpeechSynthesisUtterance(text);
+ utterance.lang='en-IN';
+ speechSynthesis.speak(utterance);
+}
+function toggleVoice(){
+ voiceEnabled=!voiceEnabled;
+ $('voiceStatus').textContent=voiceEnabled?'ON':'OFF';
+ if(!voiceEnabled)speechSynthesis.cancel();
+}
+
+const savedEmail=sessionStorage.getItem('indianDemoSession');
+if(savedEmail){
+ const users=JSON.parse(localStorage.getItem('indianDemoUsers')||'[]');
+ currentUser=users.find(u=>u.email===savedEmail);
+ if(currentUser)openApp();
+ else sessionStorage.removeItem('indianDemoSession');
+}
+</script>
+</body>
+</html>
